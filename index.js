@@ -17,16 +17,19 @@ for (const folder of commandFolders) {
 		client.commands.set(command.name, command);
 	}
 }
-
+client.once('ready', () => {
+	console.log('Ready!');
+});
 client.on('message', message => {
 	if (!message.content.startsWith(prefix) || message.author.bot) return;
 
 	const args = message.content.slice(prefix.length).trim().split(/ +/);
 	const commandName = args.shift().toLowerCase();
-	if (!client.commands.has(commandName)) return;
 	const command = client.commands.get(commandName)
-	|| client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
+		|| client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
+
 	if (!command) return;
+
 	if (command.guildOnly && message.channel.type === 'dm') {
 		return message.reply('I can\'t execute that command inside DMs!');
 	}
@@ -51,7 +54,13 @@ client.on('message', message => {
 	}
 	timestamps.set(message.author.id, now);
 	setTimeout(() => timestamps.delete(message.author.id), cooldownAmount);
-
+	// checking for perms
+	if (command.permissions) {
+		const authorPerms = message.channel.permissionsFor(message.author);
+		if (!authorPerms || !authorPerms.has(command.permissions)) {
+			return message.reply('You can not do this!');
+		}
+	}
 	// adding check for args
 	if (command.args && !args.length) {
 		let reply = `You didn't provide any arguments, ${message.author}!`;
