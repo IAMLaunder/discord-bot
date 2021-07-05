@@ -8,6 +8,7 @@ const client = new Discord.Client();
 client.commands = new Discord.Collection();
 client.cooldowns = new Discord.Collection();
 
+//client.user.setActivity('gm');
 // to go through folder heirarchy
 const commandFolders = fs.readdirSync('./commands');
 for (const folder of commandFolders) {

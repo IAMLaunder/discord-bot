@@ -9,7 +9,8 @@ module.exports = {
 		}
 
 		const taggedUser = message.mentions.users.first();
-
+		const member = message.mentions.members.first();
 		message.channel.send(`You wanted to kick: ${taggedUser.username}`);
+		member.kick();
 	},
 };
