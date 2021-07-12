@@ -10,7 +10,7 @@ client.commands = new Discord.Collection();
 client.cooldowns = new Discord.Collection();
 const PREFIX = '$';
 
-// client.user.setActivity('gm');
+// client.user.setActivity('use !help for commands');
 // to go through folder heirarchy
 const commandFolders = fs.readdirSync('./commands');
 for (const folder of commandFolders) {
@@ -24,7 +24,7 @@ for (const folder of commandFolders) {
 const sequelize = new Sequelize('database', 'user', 'password', {
 	host: 'localhost',
 	dialect: 'sqlite',
-	logging: false,
+	logging: true,
 	// SQLite only
 	storage: 'database.sqlite',
 });
@@ -44,6 +44,12 @@ const Tags = sequelize.define('tags', {
 		unique: true,
 	},
 	description: Sequelize.TEXT,
+	win: Sequelize.INTEGER,
+	loss: Sequelize.INTEGER,
+	ACS: Sequelize.INTEGER,
+	kills: Sequelize.INTEGER,
+	deaths: Sequelize.INTEGER,
+	assists: Sequelize.INTEGER,
 	username: Sequelize.STRING,
 	usage_count: {
 		type: Sequelize.INTEGER,
@@ -68,13 +74,25 @@ client.on('message', async message => {
 			// [delta]
 			const splitArgs = commandArgs.split(' ');
 			const tagName = splitArgs.shift();
-			const tagDescription = splitArgs.join(' ');
+			const tagDescription = splitArgs.shift();
+			const tagWin = splitArgs.shift();
+			const tagLoss = splitArgs.shift();
+			const tagACS = splitArgs.shift();
+			const tagKills = splitArgs.shift();
+			const tagDeaths = splitArgs.shift();
+			const tagAssists = splitArgs.shift();
 
 			try {
 				// equivalent to: INSERT INTO tags (name, description, username) values (?, ?, ?);
 				const tag = await Tags.create({
 					name: tagName,
 					description: tagDescription,
+					win: tagWin,
+					loss: tagLoss,
+					ACS: tagACS,
+					kills: tagKills,
+					deaths: tagDeaths,
+					assists: tagAssists,
 					username: message.author.username,
 				});
 				return message.reply(`Tag ${tag.name} added.`);
@@ -83,6 +101,7 @@ client.on('message', async message => {
 				if (e.name === 'SequelizeUniqueConstraintError') {
 					return message.reply('That tag already exists.');
 				}
+				// return message.reply(tagWin);
 				return message.reply('Something went wrong with adding a tag.');
 			}
 		}
@@ -95,7 +114,15 @@ client.on('message', async message => {
 			if (tag) {
 				// equivalent to: UPDATE tags SET usage_count = usage_count + 1 WHERE name = 'tagName';
 				tag.increment('usage_count');
-				return message.channel.send(tag.get('description'));
+				/* const tagDesc = tag.get('description');
+				const tagWin = tag.get('tagWin');
+				const tagLoss = tag.get('tagLoss');
+				const tagACS = tag.get('tagACS');
+				const tagKills = tag.get('tagKills');
+				const tagDeaths = tag.get('tagDeaths');
+				const tagAssists = tag.get('tagAssists');*/
+				//const tag = await Tags.findOne({ where: { name: tagName } });
+				return message.channel.send(`Description: ${tag.description} \n Wins: ${tag.win} \n Losses: ${tag.loss} \n ACS: ${tag.ACS} \n Kills: ${tag.kills} \n Deaths: ${tag.deaths} \n Assists: ${tag.assists}`);
 			}
 			return message.reply(`Could not find tag: ${tagName}`);
 		}
@@ -127,8 +154,11 @@ client.on('message', async message => {
 			// [lambda]
 			// equivalent to: SELECT name FROM tags;
 			const tagList = await Tags.findAll({ attributes: ['name'] });
+			const tagDesc = await Tags.findAll({ attributes: ['description'] });
 			const tagString = tagList.map(t => t.name).join(', ') || 'No tags set.';
-			return message.channel.send(`List of tags: ${tagString}`);
+			const tagString2 = tagDesc.map(t => t.description).join(', ') || 'No tags set.';
+			return message.channel.send(`List of tags: ${tagString} \n List of Desc: ${tagString2}`);
+
 		}
 		else if (command === 'removetag') {
 			// [mu]
